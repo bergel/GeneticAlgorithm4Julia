@@ -12,7 +12,6 @@ using Random
 # To make everything reproducible
 Random.seed!(42)
 
-
 # Create a gene value
 function createGene() 
     return floor(Int, rand() * 10)
@@ -70,5 +69,16 @@ end
 @test checkIfSimilar([1, 2, 3, 4], mutateAtIndex([1, 2, 3, 4], 2))
 @test checkIfSimilar([1, 2, 3, 4], mutateAtIndex([1, 2, 3, 4], 1))
 @test checkIfSimilar([1, 2, 3, 4], mutateAtIndex([1, 2, 3, 4], 4))
+
+
+# Fitness function
+function fitness(ind)
+    solution = 1:5
+    allDifferent = filter(((a,b),) -> a != b, collect(solution, ind))
+    return length(allDifferent)
+end
+
+@test fitness([3, 2, 1, 4, 5]) == 0
+
 
 # We are now ready to run the algorithm
