@@ -74,11 +74,64 @@ end
 # Fitness function
 function fitness(ind)
     solution = 1:5
-    allDifferent = filter(((a,b),) -> a != b, collect(solution, ind))
+    allDifferent = filter(((a,b),) -> a != b, collect(zip(solution, ind)))
     return length(allDifferent)
 end
 
-@test fitness([3, 2, 1, 4, 5]) == 0
+@test fitness([3, 2, 1, 4, 5]) == 2
+@test fitness(reverse(collect(1:5))) == 4
+@test fitness(1:5) == 0
 
+function bestFitnessOf(population)
+    return maximum(map(fitness, population))
+end 
+
+# Pick best individual
+function pickBestIndividual(population)
+    indexMaxFitness = argmin(map(fitness, population))
+    bestIndividual = population[indexMaxFitness]
+    return bestIndividual
+end
+
+@test pickBestIndividual([[3, 2, 1, 4, 5], reverse(collect(1:5)), 1:5]) == 1:5
+@test pickBestIndividual([[3, 2, 1, 4, 5], reverse(collect(1:5))]) == [3, 2, 1, 4, 5]
+
+
+# Selection using the tournament of size k
+# Assume that the smallest fitness is the best
+function selectIndividual(population; k=5)
+    populationSize = length(population)
+    selectedIndividuals = []
+    for tmp in 1:k
+        anInd = population[floor(Int64, rand()*populationSize) + 1]
+        push!(selectedIndividuals, anInd)
+    end
+    return pickBestIndividual(selectedIndividuals)
+end
+
+@test selectIndividual([[3, 2, 1, 4, 5], reverse(collect(1:5)), 1:5]) == 1:5
+@test selectIndividual([[3, 2, 1, 4, 5], reverse(collect(1:5))]) == [3, 2, 1, 4, 5]
 
 # We are now ready to run the algorithm
+function run(;maxNumberOfIterations=10, probMutation=0.2)
+    population = createPopulation()
+    numberOfIndividuals = length(population)
+    fitnesses = []
+    for iteration in 1:maxNumberOfIterations
+        newPopulation = []
+        for it in 1:numberOfIndividuals
+            ind1 = selectIndividual(population)
+            ind2 = selectIndividual(population)
+            newIndividual = crossover(ind1, ind2)
+            if (rand() <= probMutation) 
+                newIndividual = mutate(newIndividual)
+            end
+            push!(newPopulation, newIndividual)
+        end
+        population = newPopulation
+        push!(fitnesses, bestFitnessOf(population))
+    end
+    return pickBestIndividual(population), fitnesses
+end
+
+run(maxNumberOfIterations=40)
